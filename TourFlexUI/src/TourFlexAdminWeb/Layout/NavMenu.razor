@@ -1,0 +1,24 @@
+@inject NavigationManager Navigation
+
+<MudNavMenu>
+    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
+        Dashboard
+    </MudNavLink>
+    <MudNavLink Href="/listings" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.List">
+        Listings
+    </MudNavLink>
+    <MudNavLink Href="/profile" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Person">
+        Profile
+    </MudNavLink>
+    <MudNavLink Href="/login" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Logout" OnClick="Logout">
+        Logout
+    </MudNavLink>
+</MudNavMenu>
+
+@code {
+    private void Logout()
+    {
+        // Add logout logic (e.g., clear auth token, redirect to /login)
+        Navigation.NavigateTo("/login");
+    }
+}

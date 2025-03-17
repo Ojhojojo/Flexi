@@ -1,0 +1,28 @@
+﻿@page "/"
+@inject HttpClient Http
+@using TourFlexWebLibrary.Models
+
+<MudText Typo="Typo.h3">Discover NZ Off-Peak Deals</MudText>
+<MudTextField @bind-Value="SearchTerm" Placeholder="Search experiences..." />
+<MudButton Href="/search">Search</MudButton>
+<MudGrid>
+    @foreach (var deal in FeaturedDeals)
+    {
+        <MudItem xs="12" sm="4">
+            <MudCard>
+                <MudCardContent>@deal.Title - $@(deal.Price * (1 - deal.Discount / 100m)) (Save @deal.Discount%)</MudCardContent>
+                <MudCardActions><MudButton Href="@($"/book/{deal.Id}")">Book Now</MudButton></MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+</MudGrid>
+
+@code {
+    string? SearchTerm;
+    List<Listing> FeaturedDeals = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        FeaturedDeals = await Http.GetFromJsonAsync<List<Listing>>("api/listings/featured") ?? new();
+    }
+}

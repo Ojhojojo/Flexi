@@ -1,0 +1,36 @@
+﻿@page "/dashboard"
+@page "/"
+@inject HttpClient Http
+@using TourFlex.Shared.Models
+
+<MudContainer Style="margin-top: 2rem;">
+    <MudGrid>
+        <MudItem xs="12" sm="4">
+            <MudCard>
+                <MudCardContent>Current Bookings: @Stats?.Bookings</MudCardContent>
+                <MudCardActions><MudButton Variant="Variant.Filled" Color="Color.Primary">View</MudButton></MudCardActions>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudCard>
+                <MudCardContent>Active Listings: @Stats?.Listings</MudCardContent>
+                <MudCardActions><MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/listings">Add</MudButton></MudCardActions>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudCard>
+                <MudCardContent>Subscription: @Stats?.SubscriptionTier</MudCardContent>
+                <MudCardActions><MudButton Variant="Variant.Filled" Color="Color.Primary">Upgrade</MudButton></MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    DashboardStats? Stats;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Stats = await Http.GetFromJsonAsync<DashboardStats>("api/business/stats");
+    }
+}

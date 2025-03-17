@@ -1,0 +1,77 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+
+<MudLayout>
+    <MudBreakpointProvider>
+        <MudAppBar Elevation="1">
+            <a href="/">
+                <MudText Typo="Typo.h5" Class="ml-3">
+                </MudText>
+            </a>
+            <MudSpacer />
+
+        </MudAppBar>
+    </MudBreakpointProvider>
+
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code
+{
+    // TODO: Do a clean up here: Create a based component to share mudblazor configuration with web
+    private bool _drawerOpen = true;
+    private bool _isDarkMode;
+    private bool _isLoggedIn;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // _isLoggedIn = await AuthenticationService.IsLoggedIn();
+
+        // if (!_isLoggedIn)
+        // {
+        //     return;
+        // }
+
+        // // TODO: Rewrite this and use claims to enable/to get user account
+        // if (firstRender)
+        // {
+        //     // TODO: If any of this is error - redirect to an error page
+        //     var user = await Client.GetUser();
+        //     if (user is not null)
+        //     {
+        //         UserService.SetUser(user);
+        //     }
+        // }
+    }
+
+    private void Navigate(string route)
+    {
+        Navigation.NavigateTo($"/{route}");
+    }
+
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private void DarkModeToggle()
+    {
+        _isDarkMode = !_isDarkMode;
+    }
+
+  
+    public string DarkLightModeButtonIcon => _isDarkMode switch
+    {
+        true => Icons.Material.Rounded.AutoMode,
+        false => Icons.Material.Outlined.DarkMode,
+    };
+}

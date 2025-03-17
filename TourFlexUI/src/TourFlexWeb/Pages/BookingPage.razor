@@ -1,0 +1,38 @@
+﻿@page "/book/{Id:int}"
+@inject HttpClient Http
+@using TourFlexWebLibrary.Models
+
+<MudGrid>
+    <MudItem xs="12" sm="6">
+        <MudText>@Listing?.Title</MudText>
+        <MudText>Price: $@(Listing?.Price) (Discount: @Listing?.Discount%)</MudText>
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudForm>
+            <MudDatePicker Label="Date" @bind-Date="BookingDate" />
+            <MudNumericField Label="Guests" @bind-Value="Guests" Min="1" />
+            <MudText>Total: $@Total</MudText>
+            <MudButton OnClick="Book">Pay Now</MudButton>
+        </MudForm>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    Listing? Listing;
+    DateTime? BookingDate = DateTime.Today;
+    int Guests = 1;
+    decimal Total => Listing != null ? Listing.Price * (1 - Listing.Discount / 100m) * Guests : 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Listing = await Http.GetFromJsonAsync<Listing>($"api/listings/{Id}");
+    }
+
+    async Task Book()
+    {
+        var booking = new Booking { ListingId = Id, Date = BookingDate ?? DateTime.Today, Guests = Guests, TotalPrice = Total };
+        var response = await Http.PostAsJsonAsync("api/listings/book", booking);
+        // Handle response (e.g., show success message)
+    }
+}

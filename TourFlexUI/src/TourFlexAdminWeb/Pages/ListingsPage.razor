@@ -1,0 +1,31 @@
+﻿@page "/listings"
+@inject HttpClient Http
+@using TourFlex.Shared.Models
+@using TourFlexWebLibrary.Models
+
+<MudTable Items="@ListingsData" Hover="true">
+    <HeaderContent>
+        <MudTh>Title</MudTh>
+        <MudTh>Price</MudTh>
+        <MudTh>Discount</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Title</MudTd>
+        <MudTd>$@context.Price</MudTd>
+        <MudTd>@context.Discount%</MudTd>
+        <MudTd>@context.Status</MudTd>
+        <MudTd><MudButton Variant="Variant.Filled" Color="Color.Primary">Edit</MudButton></MudTd>
+    </RowTemplate>
+</MudTable>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/listings/add">Add New Listing</MudButton>
+
+@code {
+    List<Listing> ListingsData = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        ListingsData = await Http.GetFromJsonAsync<List<Listing>>("api/business/listings") ?? new();
+    }
+}

@@ -1,0 +1,24 @@
+﻿@inject NavigationManager Navigation
+
+@page "/login"
+<MudCard>
+    <MudCardContent>
+        <MudTextField Label="Email" @bind-Value="Email" Variant="Variant.Outlined" />
+        <MudTextField Label="Password" @bind-Value="Password" Variant="Variant.Outlined" InputType="InputType.Password" />
+    </MudCardContent>
+    <MudCardActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoginUser">Login</MudButton>
+    </MudCardActions>
+</MudCard>
+
+@code {
+    private string Email { get; set; }
+    private string Password { get; set; }
+
+    private async Task LoginUser()
+    {
+        // Call /api/signup or /api/login (POST email, password)
+        // On success, store token, redirect to /dashboard
+        Navigation.NavigateTo("/dashboard");
+    }
+}
