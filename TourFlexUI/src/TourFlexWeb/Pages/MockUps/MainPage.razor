@@ -1,0 +1,185 @@
+﻿@page "/mockups"
+
+
+<MudMainContent Class="main-container">
+    <!-- Header -->
+    <MudAppBar Elevation="1" Dense="true" Color="Color.Primary">
+        <MudText Typo="Typo.h6" Class="ml-4">Flexi</MudText>
+    </MudAppBar>
+
+    <!-- Content Area -->
+    <MudContainer Class="content-area pa-0" Style="max-width: 100%;">
+        @switch (_activeTab)
+        {
+            case 0:
+                <SocialFeed Posts="SamplePosts" OnAddPostClicked="@(() => OpenAddPostDialog())" />
+                break;
+            case 1:
+                <TravelPlanning OnPlanSubmitted="HandlePlanSubmission" />
+                break;
+            case 2:
+                <UserProfile Badges="SampleBadges" Flags="SampleFlags" />
+                break;
+        }
+    </MudContainer>
+
+    <!-- Custom Tab Navigation -->
+    <MudPaper Class="tabs-container">
+        <div class="tab-button @(_activeTab == 0 ? "active" : "")" @onclick="() => SetActiveTab(0)">
+            <MudIcon Icon="@Icons.Material.Filled.DynamicFeed" Size="Size.Medium" />
+            <MudText Typo="Typo.caption">Feed</MudText>
+        </div>
+        <div class="tab-button @(_activeTab == 1 ? "active" : "")" @onclick="() => SetActiveTab(1)">
+            <MudIcon Icon="@Icons.Material.Filled.Place" Size="Size.Medium" />
+            <MudText Typo="Typo.caption">Plan</MudText>
+        </div>
+        <div class="tab-button @(_activeTab == 2 ? "active" : "")" @onclick="() => SetActiveTab(2)">
+            <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Medium" />
+            <MudText Typo="Typo.caption">Profile</MudText>
+        </div>
+    </MudPaper>
+
+    <!-- Floating Action Button -->
+    <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddPostDialog" Style="position: fixed; bottom: 70px; right: 16px;" />
+
+    <!-- Add Post Dialog -->
+    <MudDialog @bind-IsVisible="_isAddPostDialogVisible">
+        <TitleContent>
+            <MudText Typo="Typo.h6">Add New Post</MudText>
+        </TitleContent>
+        <DialogContent>
+            <MudTextField @bind-Value="_newPostContent" Label="Share your experience" Variant="Variant.Outlined" Lines="3" Placeholder="Write about your travel experience..." Class="mb-4" />
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="CloseAddPostDialog">Cancel</MudButton>
+            <MudButton Color="Color.Primary" OnClick="SubmitPost">Post</MudButton>
+        </DialogActions>
+    </MudDialog>
+</MudMainContent>
+
+@code {
+    private int _activeTab = 0;
+    private bool _isAddPostDialogVisible = false;
+    private string _newPostContent = "";
+
+    private List<Post> SamplePosts = new List<Post>
+    {
+        new Post { Id = 1, UserName = "User1", Content = "Amazing hike in Queenstown! 🏞️ The views were breathtaking.", MediaUrl = "https://content1.getnarrativeapp.com/a2157d9d-e6e7-4dd6-ba69-67185aa31535/img_ref/f56df305-11c4-4037-bb9e-3c9c123fd1df/Queenstown-wedding-photographer-20011-Queenstown-wedding-Photographer_1500.jpg", MediaType = "image", Likes = 10, Comments = 3 },
+        new Post { Id = 2, UserName = "User2", Content = "Tried the best food tour in Auckland 🍴", MediaUrl = "https://www.w3schools.com/html/mov_bbb.mp4", MediaType = "video", Likes = 8, Comments = 5 },
+        new Post { Id = 3, UserName = "User3", Content = "Another one", MediaUrl = "https://content1.getnarrativeapp.com/a2157d9d-e6e7-4dd6-ba69-67185aa31535/img_ref/f56df305-11c4-4037-bb9e-3c9c123fd1df/Queenstown-wedding-photographer-20011-Queenstown-wedding-Photographer_1500.jpg", MediaType = "image", Likes = 10, Comments = 3 }
+    };
+
+    private List<Badge> SampleBadges = new List<Badge>
+    {
+        new Badge { Id = 1, Name = "First Reviewer", Color = Color.Primary },
+        new Badge { Id = 2, Name = "Frequent Traveler", Color = Color.Secondary },
+        new Badge { Id = 3, Name = "Cultural Explorer", Color = Color.Info }
+    };
+
+    private List<Flag> SampleFlags = new List<Flag>
+    {
+        new Flag { Id = 1, Location = "Auckland 🇳🇿", Color = Color.Primary },
+        new Flag { Id = 2, Location = "Queenstown 🇳🇿", Color = Color.Secondary }
+    };
+
+    private void SetActiveTab(int index)
+    {
+        _activeTab = index;
+        StateHasChanged();
+    }
+
+    private void HandlePlanSubmission(TravelPlan plan)
+    {
+        // Handle plan submission (e.g., call API)
+    }
+
+    private void OpenAddPostDialog()
+    {
+        _isAddPostDialogVisible = true;
+        StateHasChanged();
+    }
+
+    private void CloseAddPostDialog()
+    {
+        _isAddPostDialogVisible = false;
+        _newPostContent = "";
+        StateHasChanged();
+    }
+
+    private void SubmitPost()
+    {
+        if (!string.IsNullOrEmpty(_newPostContent))
+        {
+            var newPost = new Post
+                {
+                    Id = SamplePosts.Count + 1,
+                    UserName = "CurrentUser",
+                    Content = _newPostContent,
+                    MediaUrl = "",
+                    MediaType = "text",
+                    Likes = 0,
+                    Comments = 0
+                };
+            SamplePosts.Insert(0, newPost);
+            CloseAddPostDialog();
+        }
+    }
+}
+
+
+<style>
+    .main-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 64px); /* Subtract the height of MudAppBar (48px is the default dense height) */
+        overflow: hidden;
+        padding: 5px;
+    }
+
+    .content-area {
+        flex: 1;
+        overflow-y: auto;
+        padding-bottom: 60px; /* Ensure content doesn't overlap with the tab navigation */
+    }
+
+    /* Hide scrollbar */
+    .content-area::-webkit-scrollbar {
+        width: 0; /* Set scrollbar width to 0 */
+        height: 0; /* Set scrollbar height to 0 */
+    }
+
+    .content-area {
+        -ms-overflow-style: none; /* Internet Explorer 10+ */
+        scrollbar-width: none; /* Firefox */
+    }
+
+    .tabs-container {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        border-top: 1px solid #e0e0e0;
+        height: 60px; /* Fixed height for the tab navigation */
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+    }
+
+    .tab-button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px;
+        cursor: pointer;
+        color: #666;
+    }
+
+        .tab-button.active {
+            color: #008080; /* Primary color for active tab */
+        }
+
+        .tab-button:hover {
+            color: #008080;
+        }
+</style>

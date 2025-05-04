@@ -1,9 +1,10 @@
 ﻿@page "/listings"
 @inject HttpClient Http
 @using TourFlex.Shared.Models
+@using TourFlexAdminWeb.Components.Listings
 @using TourFlexWebLibrary.Models
 
-<MudTable Items="@ListingsData" Hover="true">
+<MudTable Items="@_listingsData" Hover="true">
     <HeaderContent>
         <MudTh>Title</MudTh>
         <MudTh>Price</MudTh>
@@ -19,13 +20,46 @@
         <MudTd><MudButton Variant="Variant.Filled" Color="Color.Primary">Edit</MudButton></MudTd>
     </RowTemplate>
 </MudTable>
-<MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/listings/add">Add New Listing</MudButton>
+<MudButton Variant="Variant.Filled" Class="mt-3" Color="Color.Primary" OnClick="ShowAddListing">Add New Listing</MudButton>
 
-@code {
-    List<Listing> ListingsData = new();
+<MudDrawer @bind-Open="@_addListing" Width="400px" Anchor="Anchor.Right" Elevation="1" Variant="@DrawerVariant.Temporary">
+    <MudDrawerHeader>
+        <MudText Typo="Typo.h6">Add Listings</MudText>
+    </MudDrawerHeader>
+    <MudNavMenu>
+        <AddListings></AddListings>
+    </MudNavMenu>
+</MudDrawer>
+
+<MudDrawer @bind-Open="@_editListing" Width="400px" Anchor="Anchor.Right" Elevation="1" Variant="@DrawerVariant.Temporary">
+    <MudDrawerHeader>
+        <MudText Typo="Typo.h6">Edit Listings</MudText>
+    </MudDrawerHeader>
+    <MudNavMenu>
+        <EditListings></EditListings>
+    </MudNavMenu>
+</MudDrawer>
+
+@code 
+{
+    private List<Listing> _listingsData = new();
+
+    private bool _addListing;
+
+    private bool _editListing;
 
     protected override async Task OnInitializedAsync()
     {
-        ListingsData = await Http.GetFromJsonAsync<List<Listing>>("api/business/listings") ?? new();
+        _listingsData = await Http.GetFromJsonAsync<List<Listing>>("api/business/listings") ?? new();
+    }
+
+    private void ShowAddListing()
+    {
+        _addListing = true;
+    }
+
+    private void ShowEditListing()
+    {
+        _editListing = true;
     }
 }

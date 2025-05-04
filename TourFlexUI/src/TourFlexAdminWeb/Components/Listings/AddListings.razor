@@ -1,5 +1,57 @@
-﻿<h3>AddListings</h3>
+﻿@inject HttpClient Http
+
+<MudCard>
+    <MudCardContent>
+        <MudTextField Label="Title" @bind-Value="Listing.Title" Variant="Variant.Outlined" />
+        <MudTextField Label="Description" @bind-Value="Listing.Description" Variant="Variant.Outlined" Lines="3" />
+        <MudTextField Label="Price" @bind-Value="Listing.Price" Variant="Variant.Outlined" InputType="InputType.Number" />
+        <MudFileUpload T="IBrowserFile" FilesChanged="HandleFileUpload">
+            <ActivatorContent>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.CloudUpload">
+                    Upload Files
+                </MudButton>
+            </ActivatorContent>
+        </MudFileUpload>
+        <MudTextField Label="Offer (e.g., 10% off)" @bind-Value="Listing.Offer" Variant="Variant.Outlined" />
+    </MudCardContent>
+    <MudCardActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveListing">Save</MudButton>
+    </MudCardActions>
+</MudCard>
 
 @code {
+    [Parameter] public int Id { get; set; }
+    private ListingModel Listing = new();
 
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id > 0)
+        {
+            // Fetch existing listing from /api/listings/{id} (GET)
+            Listing = await Http.GetFromJsonAsync<ListingModel>($"/api/listings/{Id}");
+        }
+    }
+
+    private async Task HandleFileUpload(IBrowserFile file)
+    {
+        // Upload to /api/upload, store URL in Listing.PhotoUrl
+        Listing.PhotoUrl = "temp-url"; // Replace with actual API response
+    }
+
+    private async Task SaveListing()
+    {
+        // POST to /api/listings (new) or PUT to /api/listings/{id} (edit)
+        await Http.PostAsJsonAsync("/api/listings", Listing);
+    }
+
+    public class ListingModel
+    {
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public decimal Price { get; set; }
+        public string PhotoUrl { get; set; }
+        public string Offer { get; set; }
+    }
 }

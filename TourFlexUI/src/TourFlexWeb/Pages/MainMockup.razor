@@ -1,0 +1,115 @@
+﻿@page "/"
+
+<MudMainContent>
+    <MudContainer Class="pa-0" Style="max-width: 100%;">
+        <!-- Header -->
+        <MudAppBar Elevation="1" Dense="true" Color="Color.Primary">
+            <MudText Typo="Typo.h6" Class="ml-4">Flexi</MudText>
+        </MudAppBar>
+
+        <!-- Tab Navigation -->
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-0" ActivePanelIndex="@_activeTab" ActivePanelIndexChanged="TabChanged">
+            <MudTabPanel Text="Plan" Icon="@Icons.Material.Filled.Place">
+                <MudContainer Class="pa-4">
+                    <MudText Typo="Typo.h6" GutterBottom="true">Travel Planning</MudText>
+                    <MudTextField @bind-Value="destination" Label="Destination" Variant="Variant.Outlined" Class="mb-4" Placeholder="Enter destination" />
+                    <MudSelect T="string" Label="Interest" Variant="Variant.Outlined" @bind-Value="interest" Class="mb-4">
+                        <MudSelectItem Value="@("Cultural Experiences")" />
+                        <MudSelectItem Value="@("Food Tours")" />
+                        <MudSelectItem Value="@("Relaxation")" />
+                        <MudSelectItem Value="@("Adventure")" />
+                    </MudSelect>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true">Get Suggestions</MudButton>
+                </MudContainer>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Feed" Icon="@Icons.Material.Filled.DynamicFeed">
+                <MudContainer Class="pa-0">
+                    <!-- Create Post -->
+                    <MudPaper Elevation="0" Class="pa-4">
+                        <MudTextField @bind-Value="postContent" Label="Share your experience" Variant="Variant.Outlined" Lines="3" Class="mb-4" Placeholder="Write about your travel experience..." />
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true">Post</MudButton>
+                    </MudPaper>
+                    <!-- Feed Posts -->
+                    <MudPaper Elevation="0" Class="mb-2">
+                        <MudCard>
+                            <MudCardHeader>
+                                <CardHeaderAvatar>
+                                    <MudAvatar Color="Color.Primary">U1</MudAvatar>
+                                </CardHeaderAvatar>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.body1">User1</MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardMedia Image="https://via.placeholder.com/600x400?text=Queenstown+Hike" Height="200" />
+                            <MudCardContent>
+                                <MudText Typo="Typo.body2">Amazing hike in Queenstown! 🏞️ The views were breathtaking.</MudText>
+                            </MudCardContent>
+                            <MudCardActions>
+                                <MudIconButton Icon="@Icons.Material.Filled.Favorite" Color="Color.Default" />
+                                <MudText Typo="Typo.caption" Class="ml-2">10 Likes</MudText>
+                                <MudIconButton Icon="@Icons.Material.Filled.Comment" Color="Color.Default" Class="ml-2" />
+                                <MudText Typo="Typo.caption" Class="ml-2">3 Comments</MudText>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudPaper>
+                    <MudPaper Elevation="0" Class="mb-2">
+                        <MudCard>
+                            <MudCardHeader>
+                                <CardHeaderAvatar>
+                                    <MudAvatar Color="Color.Secondary">U2</MudAvatar>
+                                </CardHeaderAvatar>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.body1">User2</MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <video controls style="width: 100%; height: 200px; border-radius: 8px;">
+                                    <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
+                                    Your browser does not support the video tag.
+                                </video>
+                                <MudText Typo="Typo.body2" Class="mt-2">Tried the best food tour in Auckland 🍴</MudText>
+                            </MudCardContent>
+                            <MudCardActions>
+                                <MudIconButton Icon="@Icons.Material.Filled.Favorite" Color="Color.Default" />
+                                <MudText Typo="Typo.caption" Class="ml-2">8 Likes</MudText>
+                                <MudIconButton Icon="@Icons.Material.Filled.Comment" Color="Color.Default" Class="ml-2" />
+                                <MudText Typo="Typo.caption" Class="ml-2">5 Comments</MudText>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudPaper>
+                </MudContainer>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Profile" Icon="@Icons.Material.Filled.Person">
+                <MudContainer Class="pa-4">
+                    <MudGrid>
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.h6" GutterBottom="true">Badges</MudText>
+                            <MudChip T="string" Color="Color.Primary">First Reviewer</MudChip>
+                            <MudChip T="string" Color="Color.Secondary">Frequent Traveler</MudChip>
+                            <MudChip T="string" Color="Color.Info">Cultural Explorer</MudChip>
+                        </MudItem>
+                        <MudItem xs="12" Class="mt-4">
+                            <MudText Typo="Typo.h6" GutterBottom="true">Flags</MudText>
+                            <MudChip T="string" Color="Color.Primary">Auckland 🇳🇿</MudChip>
+                            <MudChip T="string" Color="Color.Secondary">Queenstown 🇳🇿</MudChip>
+                        </MudItem>
+                    </MudGrid>
+                </MudContainer>
+            </MudTabPanel>
+        </MudTabs>
+    </MudContainer>
+</MudMainContent>
+
+@code {
+    private int _activeTab = 0;
+    private string destination = "";
+    private string interest = "";
+    private string postContent = "";
+
+    private void TabChanged(int index)
+    {
+        _activeTab = index;
+    }
+}

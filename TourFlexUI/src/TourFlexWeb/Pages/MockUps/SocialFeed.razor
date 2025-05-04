@@ -1,0 +1,49 @@
+﻿
+<MudContainer Class="pa-0">
+    <!-- Feed Posts -->
+    @foreach (var post in Posts)
+    {
+        <MudPaper Elevation="0" Class="mb-2">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Primary">@post.UserName[0]</MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.body1">@post.UserName</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                @if (post.MediaType == "image" && !string.IsNullOrEmpty(post.MediaUrl))
+                {
+                    <MudCardMedia Image="@post.MediaUrl" Height="200" />
+                }
+                else if (post.MediaType == "video" && !string.IsNullOrEmpty(post.MediaUrl))
+                {
+                    <MudCardContent>
+                        <video controls style="width: 100%; height: 200px; border-radius: 8px;">
+                            <source src="@post.MediaUrl" type="video/mp4" />
+                            Your browser does not support the video tag.
+                        </video>
+                    </MudCardContent>
+                }
+                <MudCardContent>
+                    <MudText Typo="Typo.body2">@post.Content</MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudIconButton Icon="@Icons.Material.Filled.Favorite" Color="Color.Default" />
+                    <MudText Typo="Typo.caption" Class="ml-2">@post.Likes Likes</MudText>
+                    <MudIconButton Icon="@Icons.Material.Filled.Comment" Color="Color.Default" Class="ml-2" />
+                    <MudText Typo="Typo.caption" Class="ml-2">@post.Comments Comments</MudText>
+                </MudCardActions>
+            </MudCard>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public List<Post> Posts { get; set; } = new List<Post>();
+
+    [Parameter]
+    public EventCallback OnAddPostClicked { get; set; }
+}

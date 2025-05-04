@@ -1,0 +1,32 @@
+﻿@inject HttpClient Http
+
+@page "/profile"
+
+<MudContainer>
+    <MudText Typo="Typo.h5">Business Profile</MudText>
+    <MudTextField Label="Business Name" @bind-Value="Profile.Name" Variant="Variant.Outlined" />
+    <MudTextField Label="Email" @bind-Value="Profile.Email" Variant="Variant.Outlined" Disabled="true" />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveProfile">Save</MudButton>
+</MudContainer>
+
+@code {
+    private ProfileModel Profile = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch from /api/profile (GET)
+        Profile = await Http.GetFromJsonAsync<ProfileModel>("/api/profile");
+    }
+
+    private async Task SaveProfile()
+    {
+        // PUT to /api/profile
+        await Http.PutAsJsonAsync("/api/profile", Profile);
+    }
+
+    public class ProfileModel
+    {
+        public string Name { get; set; }
+        public string Email { get; set; }
+    }
+}
