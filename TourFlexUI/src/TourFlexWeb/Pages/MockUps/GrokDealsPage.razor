@@ -1,0 +1,430 @@
+﻿@page "/grokdeals"
+@using System.Net.Http.Json
+@using Markdig
+@using System.Text.RegularExpressions
+
+@inject HttpClient HttpClient
+@inject IJSRuntime JSRuntime
+@inject IDialogService DialogService
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudText Typo="Typo.h6" Color="Color.Primary">Travel Itinerary Helper</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Inherit" OnClick="ClearChat" Title="Clear Chat" />
+        <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Inherit" Href="https://docs.x.ai" Target="_blank" />
+    </MudAppBar>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+            <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" Centered="true">
+                <MudTabPanel Text="Plan Itinerary">
+                    <MudPaper Elevation="2" Class="pa-4 mt-4">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Suggested prompts:</MudText>
+                        <MudChipSet  T="String">
+                            @foreach (var suggestion in itinerarySuggestions)
+                            {
+                                <MudChip Text="@suggestion" Color="Color.Primary" OnClick="@(() => SetPrompt(suggestion))" />
+                            }
+                        </MudChipSet>
+                        <MudTextField @bind-Value="prompt"
+                                      Label="Ask about travel plans..."
+                                      Variant="Variant.Outlined"
+                                      Lines="2"
+                                      MaxLength="500"
+                                      Counter="500"
+                                      Immediate="true"
+                                      Class="mt-4"
+                                      Validation="@(new Func<string, IEnumerable<string>>(ValidatePrompt))"
+                                      Disabled="@isLoading" />
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   OnClick="SendPrompt"
+                                   Disabled="@(isLoading || string.IsNullOrWhiteSpace(prompt))"
+                                   Class="mt-4">
+                            @(isLoading ? "Sending..." : "Send")
+                        </MudButton>
+                        @if (isLoading)
+                        {
+                            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Small" Class="ml-4" />
+                        }
+                        @if (!string.IsNullOrEmpty(error))
+                        {
+                            <MudAlert Severity="Severity.Error" Class="mt-4">@error</MudAlert>
+                        }
+                    </MudPaper>
+                </MudTabPanel>
+                <MudTabPanel Text="Find Deals">
+                    <MudPaper Elevation="2" Class="pa-4 mt-4">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Suggested deal queries:</MudText>
+                        <MudChipSet T="String">
+                            @foreach (var suggestion in dealSuggestions)
+                            {
+                                <MudChip Text="@suggestion" Color="Color.Secondary" OnClick="@(() => SetDealQuery(suggestion))" />
+                            }
+                        </MudChipSet>
+                        <MudTextField @bind-Value="dealQuery"
+                                      Label="Search for the cheapest travel deals..."
+                                      Variant="Variant.Outlined"
+                                      Lines="2"
+                                      MaxLength="500"
+                                      Counter="500"
+                                      Immediate="true"
+                                      Class="mt-4"
+                                      Disabled="@isLoading" />
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Secondary"
+                                   OnClick="SearchDeals"
+                                   Disabled="@(isLoading || string.IsNullOrWhiteSpace(dealQuery))"
+                                   Class="mt-4">
+                            @(isLoading ? "Searching..." : "Search")
+                        </MudButton>
+                        @if (isLoading)
+                        {
+                            <MudProgressCircular Color="Color.Secondary" Indeterminate="true" Size="Size.Small" Class="ml-4" />
+                        }
+                        @if (!string.IsNullOrEmpty(error))
+                        {
+                            <MudAlert Severity="Severity.Error" Class="mt-4">@error</MudAlert>
+                        }
+                    </MudPaper>
+                </MudTabPanel>
+            </MudTabs>
+            <MudPaper Elevation="2" Class="pa-4 chat-container mt-4" @ref="chatContainer">
+                @if (messages.Count == 0 && !isLoading)
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">Start by planning your itinerary or searching for deals!</MudText>
+                }
+                @foreach (var message in messages)
+                {
+                    <MudCard Class="@(message.IsUser ? "user-message" : "assistant-message")" Elevation="0">
+                        <MudCardContent>
+                            <MudText Typo="@(message.IsUser ? Typo.body2 : Typo.body1)">
+                                @if (message.IsUser)
+                                {
+                                    <strong>You:</strong> @message.Content
+                                }
+                                else
+                                {
+                                    <strong>Grok:</strong>
+                                    @if (!string.IsNullOrEmpty(message.Content))
+                                    {
+                                        try
+                                        {
+                                            <div class="markdown-body">@MarkdownToHtml(message.Content)</div>
+                                            @if (message.Links != null && message.Links.Any())
+                                            {
+                                                <MudText Typo="Typo.caption" Class="mt-2">Book your stay, flights, or activities:</MudText>
+                                                @foreach (var link in message.Links)
+                                                {
+                                                    <MudButton Variant="Variant.Text" 
+                                                               Color="@(link.Provider == "Trip.com" ? Color.Secondary : Color.Primary)" 
+                                                               Href="@link.Url" 
+                                                               Target="_blank" 
+                                                               StartIcon="@GetProviderIcon(link.Provider)" 
+                                                               Class="pa-1">
+                                                        @if (link.Type == "Hotel")
+                                                        {
+                                                            @:Book @link.Name on @link.Provider
+                                                        }
+                                                        else if (link.Type == "Activity")
+                                                        {
+                                                            @:Book @link.Name on @link.Provider
+                                                        }
+                                                        else
+                                                        {
+                                                            @:Book Flight to @link.Name on @link.Provider
+                                                        }
+                                                    </MudButton>
+                                                }
+                                                <MudButton Variant="Variant.Text" Color="Color.Info" OnClick="@(() => OpenDirectBookingDialog(message.Links.FirstOrDefault()))" Class="pa-1">
+                                                    Direct Booking (Coming Soon)
+                                                </MudButton>
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            <MudText Color="Color.Error">Failed to render response: @ex.Message</MudText>
+                                            <MudText>@message.Content</MudText>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <MudText Color="Color.Warning">No content received.</MudText>
+                                    }
+                                }
+                            </MudText>
+                        </MudCardContent>
+                    </MudCard>
+                }
+                @if (isLoading)
+                {
+                    <MudCard Class="assistant-message" Elevation="0">
+                        <MudCardContent>
+                            <MudText Typo="Typo.body1">
+                                <strong>Grok:</strong> @(dealQuery != null ? "Searching for deals..." : "Planning your trip...")
+                            </MudText>
+                        </MudCardContent>
+                    </MudCard>
+                }
+            </MudPaper>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private string prompt = "";
+    private string dealQuery = "";
+    private string error = "";
+    private bool isLoading = false;
+    private List<Message> messages = new();
+    private readonly List<string> itinerarySuggestions = new()
+    {
+        "Plan a 3-day trip to Queenstown",
+        "Best activities in Auckland",
+        "Recommend hotels in Wellington",
+        "Create an itinerary for New Zealand South Island"
+    };
+    private readonly List<string> dealSuggestions = new()
+    {
+        "Cheapest flights from Auckland to Queenstown in June 2025",
+        "Best hotel deals in Wellington for July 2025",
+        "Affordable activities in Auckland for May 2025",
+        "Cheapest flights from Manila to Auckland in August 2025"
+    };
+    private MudPaper chatContainer;
+//    private ElementReference chatContainerRef => chatContainer?.GetElementReference() ?? default;
+
+    private class Message
+    {
+        public bool IsUser { get; set; }
+        public string Content { get; set; }
+        public List<Link> Links { get; set; }
+    }
+
+    private class GrokResponse
+    {
+        public string Response { get; set; }
+        public List<Link> Links { get; set; }
+    }
+
+    private class Link
+    {
+        public string Type { get; set; }
+        public string Name { get; set; }
+        public string Url { get; set; }
+        public string Provider { get; set; }
+    }
+
+    private IEnumerable<string> ValidatePrompt(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            yield return "Prompt is required.";
+        if (input.Length > 500)
+            yield return "Prompt cannot exceed 500 characters.";
+        if (!Regex.IsMatch(input, @"\b(travel|itinerary|destination|trip|vacation|tour|flight|hotel|activity|plan|visit|explore|journey|adventure)\b", RegexOptions.IgnoreCase))
+            yield return "Prompt must be related to travel or itinerary planning.";
+    }
+
+    private void SetPrompt(string suggestion)
+    {
+        prompt = suggestion;
+        dealQuery = "";
+        error = "";
+    }
+
+    private void SetDealQuery(string suggestion)
+    {
+        dealQuery = suggestion;
+        prompt = "";
+        error = "";
+    }
+
+    private void ClearChat()
+    {
+        messages.Clear();
+        error = "";
+        prompt = "";
+        dealQuery = "";
+        StateHasChanged();
+    }
+
+    private async Task SendPrompt()
+    {
+        if (string.IsNullOrWhiteSpace(prompt))
+        {
+            error = "Please enter a prompt.";
+            return;
+        }
+
+        isLoading = true;
+        error = "";
+        messages.Add(new Message { IsUser = true, Content = prompt });
+        var userPrompt = prompt;
+        prompt = "";
+
+        try
+        {
+            var request = new { Prompt = userPrompt };
+            var httpResponse = await HttpClient.PostAsJsonAsync("api/Grok", request);
+            httpResponse.EnsureSuccessStatusCode();
+
+            var responseBody = await httpResponse.Content.ReadAsStringAsync();
+            Console.WriteLine($"Raw API response: {responseBody}");
+
+            var result = await httpResponse.Content.ReadFromJsonAsync<GrokResponse>();
+            var response = result?.Response;
+
+            if (string.IsNullOrEmpty(response))
+            {
+                error = "Received an empty response from the server.";
+                messages.Add(new Message { IsUser = false, Content = "Sorry, I couldn't generate a response. Please try again.", Links = new List<Link>() });
+            }
+            else
+            {
+                Console.WriteLine($"Parsed response: {response}");
+                messages.Add(new Message { IsUser = false, Content = response, Links = result?.Links ?? new List<Link>() });
+            }
+
+            // if (chatContainerRef.Id != null)
+            // {
+            //     await JSRuntime.InvokeVoidAsync("scrollToBottom", chatContainerRef);
+            // }
+        }
+        catch (HttpRequestException ex)
+        {
+            error = ex.StatusCode switch
+            {
+                System.Net.HttpStatusCode.BadRequest => "Invalid prompt. Please check your input.",
+                System.Net.HttpStatusCode.Unauthorized => "API authentication failed. Please contact support.",
+                System.Net.HttpStatusCode.TooManyRequests => "Rate limit exceeded. Please try again later.",
+                System.Net.HttpStatusCode.NotFound => "API endpoint not found. Please contact support.",
+                _ => $"Error: {ex.Message}"
+            };
+            messages.Add(new Message { IsUser = false, Content = $"Error: {error}", Links = new List<Link>() });
+        }
+        catch (Exception ex)
+        {
+            error = $"Unexpected error: {ex.Message}";
+            messages.Add(new Message { IsUser = false, Content = $"Error: {error}", Links = new List<Link>() });
+        }
+        finally
+        {
+            isLoading = false;
+            await Task.Delay(1);
+            StateHasChanged();
+        }
+    }
+
+    private async Task SearchDeals()
+    {
+        if (string.IsNullOrWhiteSpace(dealQuery))
+        {
+            error = "Please enter a deal query.";
+            return;
+        }
+
+        isLoading = true;
+        error = "";
+        messages.Add(new Message { IsUser = true, Content = dealQuery });
+        var userQuery = dealQuery;
+        dealQuery = "";
+
+        try
+        {
+            var request = new { Query = userQuery };
+            var httpResponse = await HttpClient.PostAsJsonAsync("api/Grok/deals", request);
+            httpResponse.EnsureSuccessStatusCode();
+
+            var responseBody = await httpResponse.Content.ReadAsStringAsync();
+            Console.WriteLine($"Raw API response: {responseBody}");
+
+            var result = await httpResponse.Content.ReadFromJsonAsync<GrokResponse>();
+            var response = result?.Response;
+
+            if (string.IsNullOrEmpty(response))
+            {
+                error = "Received an empty response from the server.";
+                messages.Add(new Message { IsUser = false, Content = "Sorry, I couldn't find any deals. Please try a different query.", Links = new List<Link>() });
+            }
+            else
+            {
+                Console.WriteLine($"Parsed response: {response}");
+                messages.Add(new Message { IsUser = false, Content = response, Links = result?.Links ?? new List<Link>() });
+            }
+
+            // if (chatContainerRef.Id != null)
+            // {
+            //     await JSRuntime.InvokeVoidAsync("scrollToBottom", chatContainerRef);
+            // }
+        }
+        catch (HttpRequestException ex)
+        {
+            error = ex.StatusCode switch
+            {
+                System.Net.HttpStatusCode.BadRequest => "Invalid query. Please check your input.",
+                System.Net.HttpStatusCode.Unauthorized => "API authentication failed. Please contact support.",
+                System.Net.HttpStatusCode.TooManyRequests => "Rate limit exceeded. Please try again later.",
+                System.Net.HttpStatusCode.NotFound => "API endpoint not found. Please contact support.",
+                _ => $"Error: {ex.Message}"
+            };
+            messages.Add(new Message { IsUser = false, Content = $"Error: {error}", Links = new List<Link>() });
+        }
+        catch (Exception ex)
+        {
+            error = $"Unexpected error: {ex.Message}";
+            messages.Add(new Message { IsUser = false, Content = $"Error: {error}", Links = new List<Link>() });
+        }
+        finally
+        {
+            isLoading = false;
+            await Task.Delay(1);
+            StateHasChanged();
+        }
+    }
+
+    private MarkupString MarkdownToHtml(string markdown)
+    {
+        if (string.IsNullOrEmpty(markdown))
+        {
+            Console.WriteLine("Markdown input is empty.");
+            return new MarkupString("");
+        }
+
+        try
+        {
+            var pipeline = new MarkdownPipelineBuilder()
+                .UseAdvancedExtensions()
+                .Build();
+            var html = Markdown.ToHtml(markdown, pipeline);
+            Console.WriteLine($"Markdown converted to HTML: {html}");
+            return new MarkupString(html);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Markdown conversion failed: {ex.Message}");
+            throw;
+        }
+    }
+
+    private string GetProviderIcon(string provider)
+    {
+        return provider switch
+        {
+            "Booking.com" => Icons.Material.Filled.Hotel,
+            "Viator" => Icons.Material.Filled.LocalActivity,
+            "Trip.com" => Icons.Material.Filled.AirplanemodeActive,
+            _ => Icons.Material.Filled.Link
+        };
+    }
+
+    private async Task OpenDirectBookingDialog(Link link)
+    {
+        if (link == null) return;
+
+        var parameters = new DialogParameters
+        {
+            ["Link"] = link
+        };
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+      //  await DialogService.ShowAsync<DirectBookingDialog>("Direct Booking (Coming Soon)", parameters, options);
+    }
+}

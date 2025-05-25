@@ -1,4 +1,4 @@
-﻿@page "/mockups"
+﻿@page "/"
 
 
 <MudMainContent Class="main-container">
@@ -12,7 +12,7 @@
         @switch (_activeTab)
         {
             case 0:
-                <SocialFeed Posts="SamplePosts" OnAddPostClicked="@(() => OpenAddPostDialog())" />
+                <SocialFeed Posts="SamplePosts"/>
                 break;
             case 1:
                 <TravelPlanning OnPlanSubmitted="HandlePlanSubmission" />
@@ -40,26 +40,37 @@
     </MudPaper>
 
     <!-- Floating Action Button -->
-    <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddPostDialog" Style="position: fixed; bottom: 70px; right: 16px;" />
+    <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDrawer" Style="position: fixed; bottom: 70px; right: 16px;" />
 
-    <!-- Add Post Dialog -->
-    <MudDialog @bind-IsVisible="_isAddPostDialogVisible">
-        <TitleContent>
-            <MudText Typo="Typo.h6">Add New Post</MudText>
-        </TitleContent>
-        <DialogContent>
-            <MudTextField @bind-Value="_newPostContent" Label="Share your experience" Variant="Variant.Outlined" Lines="3" Placeholder="Write about your travel experience..." Class="mb-4" />
-        </DialogContent>
-        <DialogActions>
-            <MudButton OnClick="CloseAddPostDialog">Cancel</MudButton>
-            <MudButton Color="Color.Primary" OnClick="SubmitPost">Post</MudButton>
-        </DialogActions>
-    </MudDialog>
 </MudMainContent>
 
+<MudDrawer @bind-Open="@_isAddDrawerVisible" Width="100%" Anchor="Anchor.Bottom" Elevation="1" Variant="@DrawerVariant.Temporary">
+    <MudDrawerHeader>
+        <MudText Typo="Typo.h6">Add you next trip or guide</MudText>
+    </MudDrawerHeader>
+    <MudDivider />
+    <MudNavMenu>
+        <MudNavLink Class="pa-1" Href="trip-plan" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.NextPlan">Trip Plan</MudNavLink>
+        <MudNavLink Class="pa-1" Href="guide" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Map">Guide</MudNavLink>
+    </MudNavMenu>
+</MudDrawer>
+
+<!-- Add Post Dialog -->
+@* <MudDialog @bind-IsVisible="_isAddDrawerVisible">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Add New Post</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_newPostContent" Label="Share your experience" Variant="Variant.Outlined" Lines="3" Placeholder="Write about your travel experience..." Class="mb-4" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseAddPostDialog">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="SubmitPost">Post</MudButton>
+    </DialogActions>
+</MudDialog> *@
 @code {
     private int _activeTab = 0;
-    private bool _isAddPostDialogVisible = false;
+    private bool _isAddDrawerVisible = false;
     private string _newPostContent = "";
 
     private List<Post> SamplePosts = new List<Post>
@@ -93,15 +104,15 @@
         // Handle plan submission (e.g., call API)
     }
 
-    private void OpenAddPostDialog()
+    private void OpenAddDrawer()
     {
-        _isAddPostDialogVisible = true;
+        _isAddDrawerVisible = true;
         StateHasChanged();
     }
 
     private void CloseAddPostDialog()
     {
-        _isAddPostDialogVisible = false;
+        _isAddDrawerVisible = false;
         _newPostContent = "";
         StateHasChanged();
     }

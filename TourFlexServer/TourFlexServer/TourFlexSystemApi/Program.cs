@@ -1,7 +1,16 @@
+using Serilog;
+using TourFlexSystem.Api.Extensions;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Configure Serilog
+builder.Host.UseSerilog((context, services, config) =>
+{
+    config.ReadFrom.Configuration(context.Configuration)
+          .ReadFrom.Services(services);
+});
 
+// Add services to the container.
 builder.Services.AddControllers();
 
 builder.Services.AddHealthChecks();
@@ -22,7 +31,14 @@ builder.Services.AddCors(
         });
     });
 
+builder.Services.AddHttpClients(builder.Configuration)
+    .AddGrokRateLimit(builder.Configuration);
+builder.Services.AddMemoryCache();
+
 var app = builder.Build();
+
+app.UseRateLimiter();
+app.UseSerilogRequestLogging();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

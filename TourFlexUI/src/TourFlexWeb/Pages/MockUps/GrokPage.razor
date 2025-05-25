@@ -1,0 +1,77 @@
+﻿@page "/grok"
+@using System.Net.Http.Json
+@inject HttpClient HttpClient
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h5" GutterBottom="true">xAI Grok API Demo</MudText>
+    <MudTextField @bind-Value="prompt" Label="Enter your prompt" Variant="Variant.Outlined" Class="mb-4" Lines="3" />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SendPrompt" Disabled="@isLoading">
+        @(isLoading ? "Sending..." : "Send")
+    </MudButton>
+    @if (isLoading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="mt-4" />
+    }
+    @if (!string.IsNullOrEmpty(response))
+    {
+        <MudPaper Class="pa-4 mt-4">
+            <MudText>@response</MudText>
+        </MudPaper>
+    }
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <MudAlert Severity="Severity.Error" Class="mt-4">@error</MudAlert>
+    }
+</MudContainer>
+
+@code {
+    private string prompt = "";
+    private string response = "";
+    private string error = "";
+    private bool isLoading = false;
+
+    private async Task SendPrompt()
+    {
+        if (string.IsNullOrWhiteSpace(prompt))
+        {
+            error = "Please enter a prompt.";
+            return;
+        }
+
+        isLoading = true;
+        response = "";
+        error = "";
+
+        try
+        {
+            var request = new { Prompt = prompt };
+            var httpResponse = await HttpClient.PostAsJsonAsync("api/Grok", request);
+            httpResponse.EnsureSuccessStatusCode();
+            var result = await httpResponse.Content.ReadFromJsonAsync<GrokResponse>();
+            response = result?.Response ?? "No response received.";
+        }
+        catch (HttpRequestException ex)
+        {
+            error = ex.StatusCode switch
+            {
+                System.Net.HttpStatusCode.BadRequest => "Invalid prompt. Please check your input.",
+                System.Net.HttpStatusCode.Unauthorized => "API authentication failed.",
+                System.Net.HttpStatusCode.TooManyRequests => "Rate limit exceeded. Try again later.",
+                _ => $"Error: {ex.Message}"
+            };
+        }
+        catch (Exception ex)
+        {
+            error = $"Unexpected error: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private class GrokResponse
+    {
+        public string Response { get; set; }
+    }
+}

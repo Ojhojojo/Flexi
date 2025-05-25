@@ -1,0 +1,103 @@
+﻿@page "/itinerary-planner"
+@inject ItineraryService ItineraryService
+@inject XaiApiService XaiApiService
+
+@using System.Net.Http.Json
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h4" GutterBottom="true">Itinerary Planner</MudText>
+
+    <!-- User Input Form -->
+    <MudCard>
+        <MudCardContent>
+            <MudForm @ref="form" @bind-IsValid="@formIsValid">
+                <MudTextField Label="Destination" @bind-Value="model.Destination" Required="true" />
+                <MudNumericField Label="Budget (USD)" @bind-Value="model.Budget" Min="0" />
+                <MudTextField Label="Interests" @bind-Value="model.Interests" Placeholder="e.g., hiking, culture, food" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!formIsValid)" Class="mt-4" OnClick="GenerateAiItinerary">Generate AI Itinerary</MudButton>
+            </MudForm>
+        </MudCardContent>
+    </MudCard>
+
+    <!-- Drag-and-Drop Itinerary -->
+    <MudDropContainer T="ItineraryItem" @bind-Items="itineraryItems" ItemDropped="OnItemDropped">
+        <ChildContent>
+            <MudGrid Class="mt-4">
+                <MudItem xs="12" sm="4">
+                    <MudDropZone T="ItineraryItem" Identifier="flights" AllowReorder="true">
+                        <MudText Typo="Typo.h6">Flights</MudText>
+                        <MudList T="string">
+                            @foreach (var item in itineraryItems.Where(i => i.Category == "Flights"))
+                            {
+                                <MudListItem Text="@item.Title" SecondaryText="@item.Description" />
+                                <MudTextField Label="Notes" @bind-Value="item.Notes" Lines="2" />
+                            }
+                        </MudList>
+                    </MudDropZone>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudDropZone T="ItineraryItem" Identifier="hotels" AllowReorder="true">
+                        <MudText Typo="Typo.h6">Hotels</MudText>
+                        <MudList T="string">
+                            @foreach (var item in itineraryItems.Where(i => i.Category == "Hotels"))
+                            {
+                              <MudListItem Text="@item.Title" SecondaryText="@item.Description" />
+                                <MudTextField Label="Notes" @bind-Value="item.Notes" Lines="2" />
+                            }
+                        </MudList>
+                    </MudDropZone>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudDropZone T="ItineraryItem" Identifier="activities" AllowReorder="true">
+                        <MudText Typo="Typo.h6">Activities</MudText>
+                        <MudList T="string">
+                            @foreach (var item in itineraryItems.Where(i => i.Category == "Activities"))
+                            {
+                        <MudListItem Text="@item.Title" SecondaryText="@item.Description" />
+                                <MudTextField Label="Notes" @bind-Value="item.Notes" Lines="2" />
+                            }
+                        </MudList>
+                    </MudDropZone>
+                </MudItem>
+            </MudGrid>
+        </ChildContent>
+        <ItemRenderer>
+             <MudList T="string">
+                <MudListItem Text="@context.Title"/>
+            </MudList>
+        </ItemRenderer>
+    </MudDropContainer>
+</MudContainer>
+
+@code {
+    private MudForm form;
+    private bool formIsValid;
+    private InputModel model = new();
+    private List<ItineraryItem> itineraryItems = new();
+
+    protected override void OnInitialized()
+    {
+        itineraryItems = ItineraryService.GetItineraryItems();
+    }
+
+    private async Task GenerateAiItinerary()
+    {
+        var suggestions = await XaiApiService.GenerateItineraryAsync(model.Destination, model.Budget, model.Interests);
+        ItineraryService.AddItems(suggestions);
+        itineraryItems = ItineraryService.GetItineraryItems();
+        StateHasChanged();
+    }
+
+    private void OnItemDropped(MudItemDropInfo<ItineraryItem> dropInfo)
+    {
+        ItineraryService.UpdateItemCategory(dropInfo.Item, dropInfo.DropzoneIdentifier);
+        itineraryItems = ItineraryService.GetItineraryItems();
+    }
+
+    private class InputModel
+    {
+        public string Destination { get; set; } = string.Empty;
+        public int Budget { get; set; }
+        public string Interests { get; set; } = string.Empty;
+    }
+}
